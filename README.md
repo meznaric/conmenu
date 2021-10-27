@@ -6,10 +6,12 @@
 
  - Neovim (tested with v0.5.0)
 
-Optional, if you want some helpers for javascript ecosystem. Specifically for `fromNpm` and `fromLerna`:
+Optional: if you want some helpers for javascript ecosystem. Specifically for `fromNpm` and `fromLerna`:
 
  - vim-dispatch - For dispatching jobs in the background
  - jq - For parsing package.json
+
+Optional 2: git-worktree.nvim - This will let you easily create menu from work trees
 
 ## Installation
 
@@ -60,9 +62,24 @@ Feel free to open a pull request if you have install instructions for other syst
 </details>
 <details>
   <summary>lerna scripts menu</summary>
-  
+
   ```
   ToDo
+  ```
+</details>
+<details>
+  <summary>git-worktree.nvim integration</summary>
+
+  Requires git-worktree.nvim to be installed
+  ```lua
+    -- Prompts for name then uses create_worktree(name, name, origin)
+    :lua require('conmenu').createWorktree()
+
+    -- Shows a menu with available work trees, so you can switch easily
+    :lua require('conmenu').selectWorktree()
+
+    -- Shows a menu of worktrees ready for removal
+    :lua require('conmenu').removeWorktree()
   ```
 </details>
 <details>
