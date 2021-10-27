@@ -15,6 +15,18 @@ local state = {
   size = 0,
 }
 
+local function isCommand(commandOrMenu)
+  return type(commandOrMenu) == "string" 
+end
+
+local function isSubmenu(commandOrMenu)
+  return type(commandOrMenu) == "table"
+end
+
+local function isDivider(commandOrMenu)
+  return commandOrMenu == nil or commandOrMenu == vim.NIL
+end
+
 -- Sets buffer text based on commands
 local function updateRender()
   local options = {}
@@ -24,7 +36,7 @@ local function updateRender()
     local key = v[1]
     local commandOrMenu = v[2]
 
-    if commandOrMenu == nil then
+    if isDivider(commandOrMenu) then
       table.insert(options, string.sub(key, 1, 3) .. key)
     elseif (currentIndex == state.currentlySelected) then
       table.insert(options, "> " .. key)
@@ -79,7 +91,7 @@ local function showMenu()
   for index, v in ipairs(state.activeCommands) do
     local key = v[1]
     local commandOrMenu = v[2]
-    if (#key > state.maxLength and commandOrMenu ~= nil) then
+    if (#key > state.maxLength and (commandOrMenu ~= nil) and commandOrMenu ~= vim.NIL) then
       state.maxLength = #key
     end
     state.size = state.size + 1
@@ -97,7 +109,7 @@ local function showMenu()
     relative="cursor",
     row=0,
     col=0,
-    width=state.maxLength + 3,
+    width=state.maxLength + 2,
     height=state.size,
     style='minimal',
     -- TODO: Expose this as a configuration
@@ -182,18 +194,13 @@ local function executeItem()
   local item = state.activeCommands[state.currentlySelected];
   local name = item[1]
   local commandOrMenu = item[2]
-  if (commandOrMenu == nil) then
-    return
-  end
-  if type(commandOrMenu) == "table" then
+  if (isCommand(commandOrMenu)) then
+    close()
+    vim.cmd(commandOrMenu)
+  elseif isSubmenu(commandOrMenu) then
     close()
     state.activeCommands = commandOrMenu
     showMenu()
-  else
-    close()
-    -- Select what we had selected before if we are in selection mode
-    -- TODO: try: vim.api.nvim_feedkeys(..., "n", true)
-    vim.cmd(commandOrMenu)
   end
 end
 
@@ -210,7 +217,7 @@ local function switchItem(change)
   else
     state.currentlySelected = state.currentlySelected + change
     -- Skip over if it's just a divider
-    if state.activeCommands[state.currentlySelected][2] == nil then
+    if isDivider(state.activeCommands[state.currentlySelected][2]) then
       switchItem(change)
     end
   end
