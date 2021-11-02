@@ -1,9 +1,6 @@
 local utf8 = require('.utf8'):init()
 local utils = require('conmenu.utils')
---TODO: Figure out why this doesn't work?
---autocmd BufLeave,BufWipeout minimenu hi Cursor blend=0
---autocmd BufLeave,BufWipeout minimenu echo Alo"
-local currentlySelected = 0
+local filters = require('conmenu.filters')
 
 -- State of the currently opened menu
 local state = {
@@ -16,7 +13,7 @@ local state = {
 }
 
 local function isCommand(commandOrMenu)
-  return type(commandOrMenu) == "string" 
+  return type(commandOrMenu) == "string"
 end
 
 local function isSubmenu(commandOrMenu)
@@ -27,7 +24,7 @@ local function isDivider(commandOrMenu)
   return commandOrMenu == nil or commandOrMenu == vim.NIL
 end
 
--- Sets buffer text based on commands
+-- Populates the buffer with text
 local function updateRender()
   local options = {}
 
@@ -39,7 +36,7 @@ local function updateRender()
     if isDivider(commandOrMenu) then
       table.insert(options, string.sub(key, 1, 3) .. key)
     elseif (currentIndex == state.currentlySelected) then
-      table.insert(options, "> " .. key)
+      table.insert(options, vim.g['conmenu#cursor_character'] .. " " .. key)
     else
       table.insert(options, "  " .. key)
     end
@@ -65,7 +62,6 @@ local function getBinding(name, availableBindings)
     if (utf8.codepoint(name, i, i) > 256) then
       preceedingUtfChars = preceedingUtfChars + 1
     end
-
     -- Can we find `char` in availableBindings?
     for n = 1, #availableBindings do
       if (lowerChar == availableBindings:sub(n,n)) then
@@ -88,6 +84,7 @@ local function showMenu()
   state.size = 0 -- Number of items (size) is used for height
   state.currentlySelected = 1 -- Select the first item
 
+  -- Determine the size of the menu
   for index, v in ipairs(state.activeCommands) do
     local key = v[1]
     local commandOrMenu = v[2]
@@ -109,68 +106,74 @@ local function showMenu()
     relative="cursor",
     row=0,
     col=0,
-    width=state.maxLength + 2,
+    width=state.maxLength + 3,
     height=state.size,
     style='minimal',
-    -- TODO: Expose this as a configuration
-    border='rounded'
+    border=vim.g['conmenu#borders']
   })
 
+  -- We need a name, otherwise some autocommands don't work
   vim.api.nvim_buf_set_name(state.bufh, 'conmenu')
   vim.api.nvim_buf_set_option(state.bufh, 'buftype', 'nofile')
   vim.api.nvim_buf_set_option(state.bufh, 'filetype', 'conmenu')
 
   -- Fill in the buffer
   updateRender()
-  -- TODO: Expose this as a configuration
-  local availableBindings = "wertyuiopasdfghlzxcvbnm"
+  local availableBindings = vim.g["conmenu#available_bindings"]
   for index, v in ipairs(state.activeCommands) do
     local name = v[1]
     local commandOrMenu = v[2]
     -- Bind onlyTypes non-dividers
     if (commandOrMenu ~= nil) then
       local result = getBinding(name, availableBindings)
-
       -- Did finding a bind succeed?
       if (result[1] ~= nil) then
         vim.cmd("nnoremap <silent> <buffer> "..result[1].." :lua require('conmenu').executeItemNum("..index..")<CR>")
         availableBindings = result[2]
-        -- TODO: Expose as configuration
-        vim.fn.matchaddpos('KeyHighlight', {{index, result[3] }})
+        vim.fn.matchaddpos(vim.g["conmenu#shortcut_highlight_group"], {{index, result[3] }})
       end
     end
   end
 end
 
-
-
--- Filters active commands, currently only by filetype match.
--- Extend this if you want different filtering.
+-- Filters current menu commands based on provided options. Currently you can filter by:
+--  - File type
+--  - Custom filter function - it has to be globally define in lua or vimscript
 local function filterActiveCommands()
   local t = {}
   for i, v in ipairs(state.activeCommands) do
     local options = v[3]
+    -- We have no options - always include
     if (options == nil) then
       table.insert(t, v)
-    elseif (utils.listIncludes(options.onlyTypes, vim.bo.filetype)) then
-      table.insert(t, v)
+    else
+      local filterValid = true
+      -- Filter is a globally defined function
+      if (options.filter) then
+        -- 1st Check for global *lua* function
+        -- 2nd Check for global *vim* function
+        -- 3rd Check for conmenu filter function
+        if (_G[options.filter]) then
+          filterValid = _G[options.filter]()
+        elseif (vim.fn.exists('*'..options.filter) == 1) then
+          filterValid = vim.fn[options.filter]()
+        elseif (filters[options.filter]) then
+          filterValid = filters[options.filter]()
+        end
+      end
+      local filetypeValid = not options.onlyTypes and true or utils.listIncludes(options.onlyTypes, vim.bo.filetype);
+
+      if (filetypeValid and filterValid) then
+        table.insert(t, v)
+      end
     end
   end
   state.activeCommands = t
 end
 
-
--- Shows default menu based on global variable
-local function open()
-  state.activeCommands = vim.g.quick_menu
-  filterActiveCommands()
-  showMenu()
-end
-
 -- Closes window & wipes menu buffer.
 local function close()
   -- Restore Cursor blend
-  -- vim.cmd("hi Cursor blend=0")
   if (state.bufh ~= nil) then
     vim.cmd("bw " .. state.bufh)
   end
@@ -178,9 +181,20 @@ local function close()
   state.winId = nil
 end
 
+
+-- Shows default menu based on global variable
+local function open()
+  if (state.bufh ~= nil) then
+    close()
+  end
+  state.activeCommands = vim.g["conmenu#default_menu"]
+  filterActiveCommands()
+  showMenu()
+end
+
 -- This let's you open custom menu from your lua/vim script
 local function openCustom(menu)
-  if (state.bufh == nil) then
+  if (state.bufh ~= nil) then
     close()
   end
   state.activeCommands = menu
@@ -188,7 +202,7 @@ local function openCustom(menu)
   showMenu()
 end
 
-
+-- Executes currently selected item
 local function executeItem()
     -- Am I dumb, can you make this easier? Do we have to loop?
   local item = state.activeCommands[state.currentlySelected];
@@ -209,14 +223,18 @@ local function executeItemNum(index)
   executeItem()
 end
 
+-- Moves the selection up/down
 local function switchItem(change)
+  -- Did we press up when first item was selected? Go to end.
   if (state.currentlySelected == 1 and change == -1) then
     state.currentlySelected = state.size
+  -- Did we press down when last item was selected? Go to beginning.
   elseif (state.currentlySelected == state.size and change == 1) then
     state.currentlySelected = 1
   else
+    -- Default case
     state.currentlySelected = state.currentlySelected + change
-    -- Skip over if it's just a divider
+    -- Repeat command if it'sa divider
     if isDivider(state.activeCommands[state.currentlySelected][2]) then
       switchItem(change)
     end
@@ -235,4 +253,5 @@ return {
 
   -- Used by bindings generated by this script
   executeItemNum = executeItemNum,
+  updateRender = updateRender
 }

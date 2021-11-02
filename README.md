@@ -1,10 +1,14 @@
+<!-- panvimdoc-ignore-start -->
+
 # ConMenu
 
 Powerful but minimal context menu for neovim.
 
 ![Example_1](https://i.imgur.com/VwthRMF.jpg)
 
-## Features
+<!-- panvimdoc-ignore-end -->
+
+# Features
 
  - Quick and easy way to build menus & submenus with automatic hotkey bindings
  - Appears next to your cursor (you are probably looking there anyways!)
@@ -17,7 +21,7 @@ Opinionated / optional / language specific features:
  - Helpers for NPM projects and Lerna monorepos
  - Helpers for git worktree workflows
 
-## Requirements
+# Requirements
 
  - Neovim (tested with v0.5.0)
 
@@ -29,7 +33,9 @@ Optional 1/2: if you want better integration with javascript ecosystem. Specific
 
 Optional 2/2: [git-worktree.nvim](https://github.com/ThePrimeagen/git-worktree.nvim) - If you are going to be using `createWorktree`, `selectWorktree`, `removeWorktree`.
 
-## Installation
+<!-- panvimdoc-ignore-start -->
+
+# Installation
 
 I use Plug as a plugin manager and vimscript for my vim config, here is how I use it:
 ```
@@ -38,179 +44,173 @@ Plug 'meznaric/conmenu'
 
 Feel free to open a pull request if you have install instructions for other systems.
 
+<!-- panvimdoc-ignore-end -->
 
-## Usage
+# Usage
 
-<details>
-  <summary>Configure using Vimscript</summary>
+### Commands
+```
+" You probably only need this one
+:ConMenu
+" These commands are used by binds inside a menu
+:ConMenuNext
+:ConMenuPrevious
+:ConMenuConfirm
+:ConMenuClose
+:ConMenuUpdateRender
+```
 
-  ```
-  function! AlwaysShow()
-    " Check if in the right folder, or the path is right, or whatever...
-    return v:true
-  endfunction
 
-  let s:myFileTypes = ['typescript', 'typescriptreact']
-  let s:myOptions = { 'onlyTypes': s:myFileTypes, 'filter': 'AlwaysShow'  }
-  let s:menuItem = [name, commandOrMenu, s:myOptions]
-  let s:nestedMenu = [name, [s:menuItem, s:menuItem], s:myOptions]
-  let s:divider = ['──────────────────────────', v:null, s:myOptions]
+# Configuration
 
-  let g:conmenu#default_menu = [menuItem, divider, menuItem, nestedMenu]
-  ```
-</details>
+## Configure using Vimscript
 
-<details>
-  <summary>Configure using Lua</summary>
+```
+function! AlwaysShow()
+  " Check if in the right folder, or the path is right, or whatever...
+  return v:true
+endfunction
 
-  ```lua
-  function AlwaysShow()
-    -- Check if in the right folder, or the path is right, or whatever...
-    return true
-  end
+let s:myFileTypes = ['typescript', 'typescriptreact']
+let s:myOptions = { 'onlyTypes': s:myFileTypes, 'filter': 'AlwaysShow'  }
+let s:menuItem = [name, commandOrMenu, s:myOptions]
+let s:nestedMenu = [name, [s:menuItem, s:menuItem], s:myOptions]
+let s:divider = ['──────────────────────────', v:null, s:myOptions]
 
-  local options = { onlyTypes = ['typescript', 'typescriptreact'], filter = 'AlwaysShow' }
-  local menuItem = {name, ":echo hey", options}
-  local nestedMenu = {name, {menuItem, menuItem}, options}
-  local divider = {'──────────────────────────', nil, options}
+let g:conmenu#default_menu = [menuItem, divider, menuItem, nestedMenu]
+```
 
-  vim.g['conmenu#default_menu'] = [menuItem, divider, menuItem, nestedMenu]
-  ```
-</details>
+## Configure using Lua
 
-<details>
-  <summary>Variables, Commands and API</summary>
+```lua
+function AlwaysShow()
+  -- Check if in the right folder, or the path is right, or whatever...
+  return true
+end
 
-  ```vim
-  " Default menu that opens when you execute CocMenu
-  let g:conmenu#default_menu = [];
-  
-  " Only these keys will be bound if found in menu item name
-  let g:conmenu#available_bindings = '';
+local options = { onlyTypes = ['typescript', 'typescriptreact'], filter = 'AlwaysShow' }
+local menuItem = {name, ":echo hey", options}
+local nestedMenu = {name, {menuItem, menuItem}, options}
+local divider = {'──────────────────────────', nil, options}
 
-  " > is the default, but you can use - or something else.
-  " Note: unicode characters have different width and we do not consider this yet, so shortcut highlights will be off
-  let g:conmenu#cursor_character = '';
+vim.g['conmenu#default_menu'] = [menuItem, divider, menuItem, nestedMenu]
+```
 
-  " We use simple Popup Buffer, so NormalFloat and FloatBorder define the colors
-  " On top of that create a new highlight group shortcut_highlight_group
-  let g:conmenu#shortcut_highlight_group = 'KeyHighlight';
+## Variables
 
-  " This is just passed on to nvim_open_win, here are hte options:
-  " none, single, double, rounded, solid, shadow
-  let g:conmenu#border = 'rounded';
+```vim
+" Default menu that opens when you execute ConMenu
+let g:conmenu#default_menu = [];
 
-  " Not yet implemented
-  let g:conmenu#close_keys = ['q', '<esc>']
-  let g:conmenu#js#package_manager = 'yarn'
-  ```
+" Only these keys will be bound if found in menu item name
+let g:conmenu#available_bindings = '';
 
-  **Commands:**
-  ```
-  " You probably only need this one
-  :ConMenu
-  " These commands are used by binds inside a menu
-  :ConMenuNext
-  :ConMenuPrevious
-  :ConMenuConfirm
-  :ConMenuClose
-  :ConMenuUpdateRender
-  ```
+" > is the default, but you can use - or something else.
+" Note: unicode characters have different width and we do not consider this yet, so shortcut highlights will be off
+let g:conmenu#cursor_character = '';
 
-  **API:**
-  ```
-  " Opens default menu (defined at g:conmenu#default_menu)
-  open()
-  " Opens custom menu
-  openCustom(menu)
-  close()
+" We use simple Popup Buffer, so NormalFloat and FloatBorder define the colors
+" On top of that create a new highlight group shortcut_highlight_group
+let g:conmenu#shortcut_highlight_group = 'KeyHighlight';
 
-  executeItem()
-  switchItem(number)
+" This is just passed on to nvim_open_win, here are hte options:
+" none, single, double, rounded, solid, shadow
+let g:conmenu#border = 'rounded';
 
-  -- Javascript helpers
-  fromNpm()
-  fromLerna()
+" Not yet implemented
+let g:conmenu#close_keys = ['q', '<esc>']
+let g:conmenu#js#package_manager = 'yarn'
+```
 
-  -- Git Worktree helpers
-  createWorktree()
-  removeWorktree()
-  selectWorktree()
 
-  -- Used by bindings generated by this script
-  executeItemNum()
-  updateRender()
-  ```
-</details>
+## API
+```
+" Opens default menu (defined at g:conmenu#default_menu)
+open()
+" Opens custom menu
+openCustom(menu)
+close()
 
-<details>
-  <summary>JavaScript integration</summary>
-  
-  Requires [jq](https://github.com/stedolan/jq) so we can parse what scripts there are in package.json. There is a built in filter `IsInNodeProject`, that you can use to hide this menu if not inside a node project.
-  
-   - Use `fromLerna` to see a list of projects / packages
-   - Use `fromNpm` to see a list of available scripts in package.json
+executeItem()
+switchItem(number)
 
-  **Example**
-  ```
-  let g:conmenu#default_menu = [
-    \['Scripts', ":lua require('conmenu').fromNpm()",
-      \{ 'filter': 'IsInNodeProject' }],
-    \['Lerna Projects', ":lua require('conmenu').fromLerna()",
-      \{ 'filter': 'IsInNodeProject' }],
+-- Javascript helpers
+fromNpm()
+fromLerna()
+
+-- Git Worktree helpers
+createWorktree()
+removeWorktree()
+selectWorktree()
+
+-- Used by bindings generated by this script
+executeItemNum()
+updateRender()
+```
+
+# Integrations
+
+## JavaScript integration
+
+Requires [jq](https://github.com/stedolan/jq) so we can parse what scripts there are in package.json. There is a built in filter `IsInNodeProject`, that you can use to hide this menu if not inside a node project.
+
+ - Use `fromLerna` to see a list of projects / packages
+ - Use `fromNpm` to see a list of available scripts in package.json
+
+### Example
+```
+let g:conmenu#default_menu = [
+  \['Scripts', ":lua require('conmenu').fromNpm()",
+    \{ 'filter': 'IsInNodeProject' }],
+  \['Lerna Projects', ":lua require('conmenu').fromLerna()",
+    \{ 'filter': 'IsInNodeProject' }],
+\]
+```
+
+## git-worktree.nvim integration
+
+
+Requires [git-worktree.nvim](https://github.com/ThePrimeagen/git-worktree.nvim). There are 3 methods for you to use `createWorktree()`, `selectWorktree()` and `removeWorktree()`. On top of that there is a built in filter "IsInGitWorktree", that you can use so this menu item is shown only when you are editing inside git repositroy.
+
+### Example
+```
+let g:conmenu#default_menu = [
+  \['Git', [
+    \['Status', ':Git'],
+    \['Blame', ':Git blame'],
+    \['Why', ':GitMessenger'],
+    \['────────────────────────────'],
+    \['Create Worktree', ":lua require('conmenu').createWorktree()"],
+    \['Select Worktree', ":lua require('conmenu').selectWorktree()"],
+    \['Remove Worktree', ":lua require('conmenu').removeWorktree()"],
+    \], { 'filter': 'IsInGitWorktree' }],
   \]
-  ```
-</details>
-<details>
-  <summary>git-worktree.nvim integration</summary>
-  
+```
+<!-- panvimdoc-ignore-start -->
 
-  Requires [git-worktree.nvim](https://github.com/ThePrimeagen/git-worktree.nvim). There are 3 methods for you to use `createWorktree()`, `selectWorktree()` and `removeWorktree()`. On top of that there is a built in filter "IsInGitWorktree", that you can use so this menu item is shown only when you are editing inside git repositroy.
-
-  **Example**
-  ```
-  let g:conmenu#default_menu = [
-    \['Git', [
-      \['Status', ':Git'],
-      \['Blame', ':Git blame'],
-      \['Why', ':GitMessenger'],
-      \['────────────────────────────'],
-      \['Create Worktree', ":lua require('conmenu').createWorktree()"],
-      \['Select Worktree', ":lua require('conmenu').selectWorktree()"],
-      \['Remove Worktree', ":lua require('conmenu').removeWorktree()"],
-      \], { 'filter': 'IsInGitWorktree' }],
-    \]
-  ```
-</details>
 
 ### Examples
 
-<details>
-  <summary>Simple Menu</summary>
-  
- - Icons
-  ```
-  ToDo
-  ```
-</details>
-<details>
-  <summary>Nested Menu</summary>
-  
-  ```
-  ToDo
-  ```
-</details>
-<details>
-  <summary>Custom Menu</summary>
-  
-  ```
-  ToDo
-  ```
-</details>
-<details>
-  <summary>Filter by filetype / path / mode</summary>
-  
-  ```
-  ToDo
-  ```
-</details>
+## Simple Menu
+
+- Icons
+```
+ToDo
+```
+## Nested Menu
+
+```
+ToDo
+```
+## Custom Menu
+
+```
+ToDo
+```
+## Filter by filetype / path / mode
+
+```
+ToDo
+```
+
+<!-- panvimdoc-ignore-end -->

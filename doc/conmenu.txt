@@ -1,0 +1,220 @@
+*conmenu.txt*           For NVIM v0.5.0          Last change: 2021 November 02
+
+==============================================================================
+Table of Contents                                  *conmenu-table-of-contents*
+
+1. Features                                                 |conmenu-features|
+2. Requirements                                         |conmenu-requirements|
+3. Usage                                                       |conmenu-usage|
+4. Configuration                                       |conmenu-configuration|
+  - Configure using Vimscript              |conmenu-configure-using-vimscript|
+  - Configure using Lua                          |conmenu-configure-using-lua|
+  - Variables                                              |conmenu-variables|
+  - API                                                          |conmenu-api|
+5. Integrations                                         |conmenu-integrations|
+  - JavaScript integration                    |conmenu-javascript-integration|
+  - git-worktree.nvim integration      |conmenu-git-worktree.nvim-integration|
+
+==============================================================================
+1. Features                                                 *conmenu-features*
+
+
+- Quick and easy way to build menus & submenus with automatic hotkey bindings
+- Appears next to your cursor (you are probably looking there anyways!)
+- Context based (optionally based on the filetype or custom filter function)
+- Icon unicode support (via dev icons, you need patched fonts)
+- Configure with Vimscript or Lua
+
+
+Opinionated / optional / language specific features:
+
+
+- Helpers for NPM projects and Lerna monorepos
+- Helpers for git worktree workflows
+
+
+==============================================================================
+2. Requirements                                         *conmenu-requirements*
+
+
+- Neovim (tested with v0.5.0)
+
+
+Optional 1/2: if you want better integration with javascript ecosystem.
+Specifically for `fromNpm` and `fromLerna`:
+
+
+- vim-dispatch <https://github.com/tpope/vim-dispatch> - For dispatching jobs in the background
+- jq <https://github.com/stedolan/jq> - For parsing package.json
+- yarn - I’ll make this configurable at some point so you can use NPM instead
+
+
+Optional 2/2: git-worktree.nvim
+<https://github.com/ThePrimeagen/git-worktree.nvim> - If you are going to be
+using `createWorktree`, `selectWorktree`, `removeWorktree`.
+
+==============================================================================
+3. Usage                                                       *conmenu-usage*
+
+COMMANDS ~
+
+>
+    " You probably only need this one
+    :ConMenu
+    " These commands are used by binds inside a menu
+    :ConMenuNext
+    :ConMenuPrevious
+    :ConMenuConfirm
+    :ConMenuClose
+    :ConMenuUpdateRender
+<
+
+
+==============================================================================
+4. Configuration                                       *conmenu-configuration*
+
+CONFIGURE USING VIMSCRIPT                  *conmenu-configure-using-vimscript*
+
+>
+    function! AlwaysShow()
+      " Check if in the right folder, or the path is right, or whatever...
+      return v:true
+    endfunction
+    
+    let s:myFileTypes = ['typescript', 'typescriptreact']
+    let s:myOptions = { 'onlyTypes': s:myFileTypes, 'filter': 'AlwaysShow'  }
+    let s:menuItem = [name, commandOrMenu, s:myOptions]
+    let s:nestedMenu = [name, [s:menuItem, s:menuItem], s:myOptions]
+    let s:divider = ['──────────────────────────', v:null, s:myOptions]
+    
+    let g:conmenu#default_menu = [menuItem, divider, menuItem, nestedMenu]
+<
+
+
+CONFIGURE USING LUA                              *conmenu-configure-using-lua*
+
+>
+    function AlwaysShow()
+      -- Check if in the right folder, or the path is right, or whatever...
+      return true
+    end
+    
+    local options = { onlyTypes = ['typescript', 'typescriptreact'], filter = 'AlwaysShow' }
+    local menuItem = {name, ":echo hey", options}
+    local nestedMenu = {name, {menuItem, menuItem}, options}
+    local divider = {'──────────────────────────', nil, options}
+    
+    vim.g['conmenu#default_menu'] = [menuItem, divider, menuItem, nestedMenu]
+<
+
+
+VARIABLES                                                  *conmenu-variables*
+
+>
+    " Default menu that opens when you execute ConMenu
+    let g:conmenu#default_menu = [];
+    
+    " Only these keys will be bound if found in menu item name
+    let g:conmenu#available_bindings = '';
+    
+    " > is the default, but you can use - or something else.
+    " Note: unicode characters have different width and we do not consider this yet, so shortcut highlights will be off
+    let g:conmenu#cursor_character = '';
+    
+    " We use simple Popup Buffer, so NormalFloat and FloatBorder define the colors
+    " On top of that create a new highlight group shortcut_highlight_group
+    let g:conmenu#shortcut_highlight_group = 'KeyHighlight';
+    
+    " This is just passed on to nvim_open_win, here are hte options:
+    " none, single, double, rounded, solid, shadow
+    let g:conmenu#border = 'rounded';
+    
+    " Not yet implemented
+    let g:conmenu#close_keys = ['q', '<esc>']
+    let g:conmenu#js#package_manager = 'yarn'
+<
+
+
+API                                                              *conmenu-api*
+
+>
+    " Opens default menu (defined at g:conmenu#default_menu)
+    open()
+    " Opens custom menu
+    openCustom(menu)
+    close()
+    
+    executeItem()
+    switchItem(number)
+    
+    -- Javascript helpers
+    fromNpm()
+    fromLerna()
+    
+    -- Git Worktree helpers
+    createWorktree()
+    removeWorktree()
+    selectWorktree()
+    
+    -- Used by bindings generated by this script
+    executeItemNum()
+    updateRender()
+<
+
+
+==============================================================================
+5. Integrations                                         *conmenu-integrations*
+
+JAVASCRIPT INTEGRATION                        *conmenu-javascript-integration*
+
+Requires jq <https://github.com/stedolan/jq> so we can parse what scripts there
+are in package.json. There is a built in filter `IsInNodeProject`, that you can
+use to hide this menu if not inside a node project.
+
+
+- Use `fromLerna` to see a list of projects / packages
+- Use `fromNpm` to see a list of available scripts in package.json
+
+
+EXAMPLE ~
+
+>
+    let g:conmenu#default_menu = [
+      \['Scripts', ":lua require('conmenu').fromNpm()",
+        \{ 'filter': 'IsInNodeProject' }],
+      \['Lerna Projects', ":lua require('conmenu').fromLerna()",
+        \{ 'filter': 'IsInNodeProject' }],
+    \]
+<
+
+
+GIT-WORKTREE.NVIM INTEGRATION          *conmenu-git-worktree.nvim-integration*
+
+Requires git-worktree.nvim <https://github.com/ThePrimeagen/git-worktree.nvim>.
+There are 3 methods for you to use `createWorktree()`, `selectWorktree()` and
+`removeWorktree()`. On top of that there is a built in filter
+"IsInGitWorktree", that you can use so this menu item is shown only when you
+are editing inside git repositroy.
+
+EXAMPLE ~
+
+>
+    let g:conmenu#default_menu = [
+      \['Git', [
+        \['Status', ':Git'],
+        \['Blame', ':Git blame'],
+        \['Why', ':GitMessenger'],
+        \['────────────────────────────'],
+        \['Create Worktree', ":lua require('conmenu').createWorktree()"],
+        \['Select Worktree', ":lua require('conmenu').selectWorktree()"],
+        \['Remove Worktree', ":lua require('conmenu').removeWorktree()"],
+        \], { 'filter': 'IsInGitWorktree' }],
+      \]
+<
+
+
+
+
+Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
+
+vim:tw=78:ts=8:noet:ft=help:norl:
