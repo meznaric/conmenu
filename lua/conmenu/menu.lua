@@ -163,7 +163,17 @@ local function filterActiveCommands()
       end
       local filetypeValid = not options.onlyTypes and true or utils.listIncludes(options.onlyTypes, vim.bo.filetype);
 
-      if (filetypeValid and filterValid) then
+      local onlyBufferPathsMatches = true;
+      if (options.onlyBufferPaths) then
+        onlyBufferPathsMatches = utils.GlobsMatch(options.onlyBufferPaths, vim.fn.expand('%:p'))
+      end
+
+      local onlyWorkingDirectoriesMatches = true
+      if (options.onlyWorkingDirectories) then
+        local onlyWorkingDirectoriesMatches = utils.GlobsMatch(options.onlyWorkingDirectories, vim.fn.getcwd());
+      end
+
+      if (filetypeValid and filterValid and onlyBufferPathsMatches and onlyWorkingDirectoriesMatches) then
         table.insert(t, v)
       end
     end

@@ -25,13 +25,16 @@ Opinionated / optional / language specific features:
 
  - Neovim (tested with v0.5.0)
 
-Optional 1/2: if you want better integration with javascript ecosystem. Specifically for `fromNpm` and `fromLerna`:
+Optional 1/2:
+if you want better integration with javascript ecosystem. Specifically for `fromNpm` and `fromLerna`:
 
- - [vim-dispatch](https://github.com/tpope/vim-dispatch) - For dispatching jobs in the background
+ - [vim-dispatch](https://github.com/tpope/vim-dispatch) - For dispatching
+   jobs in the background
  - [jq](https://github.com/stedolan/jq) - For parsing package.json
  - yarn - I'll make this configurable at some point so you can use NPM instead
 
-Optional 2/2: [git-worktree.nvim](https://github.com/ThePrimeagen/git-worktree.nvim) - If you are going to be using `createWorktree`, `selectWorktree`, `removeWorktree`.
+Optional 2/2:
+[git-worktree.nvim](https://github.com/ThePrimeagen/git-worktree.nvim) - If you are going to be using `createWorktree`, `selectWorktree`, `removeWorktree`.
 
 <!-- panvimdoc-ignore-start -->
 
@@ -63,7 +66,31 @@ Feel free to open a pull request if you have install instructions for other syst
 
 # Configuration
 
-## Configure using Vimscript
+**Menu**
+
+In the documentation below `Menu` represents the array of `MenuItem`s.
+
+**MenuItem**
+
+Which is defined as an array of 3 items `Name`, `Menu` or `Command`, and `Options`
+
+ - `Name` is the name of the entry in the menu list. What you see.
+ - `Menu` or command can be either another array of `MenuItem`s
+ - `Options` defines when `MenuListItem` is shown. If you define multiple options
+    for example `onlyTypes` and `onlyWorkingDirectories` it will show the menu list
+    item only when both conditions are true, *not* when either is true. This is
+    optional. Menu items will be always shown if options are not defined.
+
+**Options**
+
+ - `onlyTypes` array of file types
+ - `filter` global lua or vimscript function, if it returns true, menu item will be shown
+ - `onlyWorkingDirectories` array of path globs. If current working directory
+    matches any of the globs then the MenuItem will be shown.
+ - `onlyBufferPaths` array of path globs. If current buffer path matches any of the
+    globs then the MenuItem will be shown. Empty glob `''`, will match :new buffer.
+
+### Vimscript Reference
 
 ```
 function! AlwaysShow()
@@ -71,8 +98,16 @@ function! AlwaysShow()
   return v:true
 endfunction
 
+let s:onlyProjectFolders = [ '/Users/otiv/Projects/*' ]
+let s:onlyTsFiles = [ '*.ts' ]
 let s:myFileTypes = ['typescript', 'typescriptreact']
-let s:myOptions = { 'onlyTypes': s:myFileTypes, 'filter': 'AlwaysShow'  }
+let s:myOptions = {
+  \ 'onlyTypes': s:myFileTypes,
+  \ 'filter': 'AlwaysShow',
+  \ 'onlyWorkingDirectories': s:onlyProjectFolders,
+  \ 'onlyBufferPaths': s:onlyTsFiles,
+  \ }
+
 let s:menuItem = [name, commandOrMenu, s:myOptions]
 let s:nestedMenu = [name, [s:menuItem, s:menuItem], s:myOptions]
 let s:divider = ['──────────────────────────', v:null, s:myOptions]
@@ -80,7 +115,7 @@ let s:divider = ['────────────────────�
 let g:conmenu#default_menu = [menuItem, divider, menuItem, nestedMenu]
 ```
 
-## Configure using Lua
+### Lua Reference
 
 ```lua
 function AlwaysShow()
@@ -88,12 +123,17 @@ function AlwaysShow()
   return true
 end
 
-local options = { onlyTypes = ['typescript', 'typescriptreact'], filter = 'AlwaysShow' }
+local options = {
+  onlyTypes = { 'typescript', 'typescriptreact' },
+  onlyBufferPaths: { path1, path2 },
+  onlyWorkingDirectories: { path3, path4 },
+  filter = 'AlwaysShow',
+}
 local menuItem = {name, ":echo hey", options}
 local nestedMenu = {name, {menuItem, menuItem}, options}
 local divider = {'──────────────────────────', nil, options}
 
-vim.g['conmenu#default_menu'] = [menuItem, divider, menuItem, nestedMenu]
+vim.g['conmenu#default_menu'] = { menuItem, divider, menuItem, nestedMenu }
 ```
 
 ## Variables
@@ -152,7 +192,9 @@ updateRender()
 
 ## JavaScript integration
 
-Requires [jq](https://github.com/stedolan/jq) so we can parse what scripts there are in package.json. There is a built in filter `IsInNodeProject`, that you can use to hide this menu if not inside a node project.
+Requires [jq](https://github.com/stedolan/jq) so we can parse what scripts there
+are in package.json. There is a built in filter `IsInNodeProject`, that you can
+use to hide this menu if not inside a node project.
 
  - Use `fromLerna` to see a list of projects / packages
  - Use `fromNpm` to see a list of available scripts in package.json
@@ -170,7 +212,10 @@ let g:conmenu#default_menu = [
 ## git-worktree.nvim integration
 
 
-Requires [git-worktree.nvim](https://github.com/ThePrimeagen/git-worktree.nvim). There are 3 methods for you to use `createWorktree()`, `selectWorktree()` and `removeWorktree()`. On top of that there is a built in filter "IsInGitWorktree", that you can use so this menu item is shown only when you are editing inside git repositroy.
+Requires [git-worktree.nvim](https://github.com/ThePrimeagen/git-worktree.nvim).
+There are 3 methods for you to use `createWorktree()`, `selectWorktree()` and
+`removeWorktree()`. On top of that there is a built in filter "IsInGitWorktree",
+that you can use so this menu item is shown only when you are editing inside git repositroy.
 
 ### Example
 ```

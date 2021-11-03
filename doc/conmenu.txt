@@ -1,4 +1,4 @@
-*conmenu.txt*           For NVIM v0.5.0          Last change: 2021 November 02
+*conmenu.txt*           For NVIM v0.5.0          Last change: 2021 November 03
 
 ==============================================================================
 Table of Contents                                  *conmenu-table-of-contents*
@@ -7,8 +7,6 @@ Table of Contents                                  *conmenu-table-of-contents*
 2. Requirements                                         |conmenu-requirements|
 3. Usage                                                       |conmenu-usage|
 4. Configuration                                       |conmenu-configuration|
-  - Configure using Vimscript              |conmenu-configure-using-vimscript|
-  - Configure using Lua                          |conmenu-configure-using-lua|
   - Variables                                              |conmenu-variables|
   - API                                                          |conmenu-api|
 5. Integrations                                         |conmenu-integrations|
@@ -44,7 +42,8 @@ Optional 1/2: if you want better integration with javascript ecosystem.
 Specifically for `fromNpm` and `fromLerna`:
 
 
-- vim-dispatch <https://github.com/tpope/vim-dispatch> - For dispatching jobs in the background
+- vim-dispatch <https://github.com/tpope/vim-dispatch> - For dispatching
+    jobs in the background
 - jq <https://github.com/stedolan/jq> - For parsing package.json
 - yarn - I’ll make this configurable at some point so you can use NPM instead
 
@@ -73,7 +72,36 @@ COMMANDS ~
 ==============================================================================
 4. Configuration                                       *conmenu-configuration*
 
-CONFIGURE USING VIMSCRIPT                  *conmenu-configure-using-vimscript*
+**Menu**
+
+In the documentation below `Menu` represents the array of `MenuItem`s.
+
+**MenuItem**
+
+Which is defined as an array of 3 items `Name`, `Menu` or `Command`, and
+`Options`
+
+
+- `Name` is the name of the entry in the menu list. What you see.
+- `Menu` or command can be either another array of `MenuItem`s
+- `Options` defines when `MenuListItem` is shown. If you define multiple options
+    for example `onlyTypes` and `onlyWorkingDirectories` it will show the menu list
+    item only when both conditions are true, _not_ when either is true. This is
+    optional. Menu items will be always shown if options are not defined.
+
+
+**Options**
+
+
+- `onlyTypes` array of file types
+- `filter` global lua or vimscript function, if it returns true, menu item will be shown
+- `onlyWorkingDirectories` array of path globs. If current working directory
+    matches any of the globs then the MenuItem will be shown.
+- `onlyBufferPaths` array of path globs. If current buffer path matches any of the
+    globs then the MenuItem will be shown. Empty glob `''`, will match :new buffer.
+
+
+VIMSCRIPT REFERENCE ~
 
 >
     function! AlwaysShow()
@@ -81,8 +109,16 @@ CONFIGURE USING VIMSCRIPT                  *conmenu-configure-using-vimscript*
       return v:true
     endfunction
     
+    let s:onlyProjectFolders = [ '/Users/otiv/Projects/*' ]
+    let s:onlyTsFiles = [ '*.ts' ]
     let s:myFileTypes = ['typescript', 'typescriptreact']
-    let s:myOptions = { 'onlyTypes': s:myFileTypes, 'filter': 'AlwaysShow'  }
+    let s:myOptions = {
+      \ 'onlyTypes': s:myFileTypes,
+      \ 'filter': 'AlwaysShow',
+      \ 'onlyWorkingDirectories': s:onlyProjectFolders,
+      \ 'onlyBufferPaths': s:onlyTsFiles,
+      \ }
+    
     let s:menuItem = [name, commandOrMenu, s:myOptions]
     let s:nestedMenu = [name, [s:menuItem, s:menuItem], s:myOptions]
     let s:divider = ['──────────────────────────', v:null, s:myOptions]
@@ -91,7 +127,7 @@ CONFIGURE USING VIMSCRIPT                  *conmenu-configure-using-vimscript*
 <
 
 
-CONFIGURE USING LUA                              *conmenu-configure-using-lua*
+LUA REFERENCE ~
 
 >
     function AlwaysShow()
@@ -99,12 +135,17 @@ CONFIGURE USING LUA                              *conmenu-configure-using-lua*
       return true
     end
     
-    local options = { onlyTypes = ['typescript', 'typescriptreact'], filter = 'AlwaysShow' }
+    local options = {
+      onlyTypes = { 'typescript', 'typescriptreact' },
+      onlyBufferPaths: { path1, path2 },
+      onlyWorkingDirectories: { path3, path4 },
+      filter = 'AlwaysShow',
+    }
     local menuItem = {name, ":echo hey", options}
     local nestedMenu = {name, {menuItem, menuItem}, options}
     local divider = {'──────────────────────────', nil, options}
     
-    vim.g['conmenu#default_menu'] = [menuItem, divider, menuItem, nestedMenu]
+    vim.g['conmenu#default_menu'] = { menuItem, divider, menuItem, nestedMenu }
 <
 
 
