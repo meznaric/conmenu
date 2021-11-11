@@ -4,7 +4,7 @@
 
 Powerful but minimal context menu for neovim.
 
-![Example_1](https://i.imgur.com/VwthRMF.jpg)
+![Example_1](./example.jpg)
 
 <!-- panvimdoc-ignore-end -->
 
@@ -65,6 +65,8 @@ Feel free to open a pull request if you have install instructions for other syst
 
 
 # Configuration
+
+See [example below](#example) if you just want a quick start.
 
 **Menu**
 
@@ -143,17 +145,19 @@ vim.g['conmenu#default_menu'] = { menuItem, divider, menuItem, nestedMenu }
 let g:conmenu#default_menu = [];
 
 " Only these keys will be bound if found in menu item name
-let g:conmenu#available_bindings = '';
+" If you want to use numbers for shortcuts too extend this
+let g:conmenu#available_bindings = 'wertyuiopasdfghlzxcvbnm';
 
 " > is the default, but you can use - or something else.
 " Note: unicode characters have different width and we do not consider this yet, so shortcut highlights will be off
-let g:conmenu#cursor_character = '';
+" Use only normal 1 byte characters, such as `-`, `~`
+let g:conmenu#cursor_character = '>';
 
 " We use simple Popup Buffer, so NormalFloat and FloatBorder define the colors
 " On top of that create a new highlight group shortcut_highlight_group
 let g:conmenu#shortcut_highlight_group = 'KeyHighlight';
 
-" This is just passed on to nvim_open_win, here are hte options:
+" This is just passed on to nvim_open_win, here are the options:
 " none, single, double, rounded, solid, shadow
 let g:conmenu#border = 'rounded';
 
@@ -231,31 +235,145 @@ let g:conmenu#default_menu = [
     \], { 'filter': 'IsInGitWorktree' }],
   \]
 ```
-<!-- panvimdoc-ignore-start -->
 
+# Example
 
-### Examples
+Here is the example of how I use, it depends on bunch of other plugins so don't expect to
+copy and paste as it's not going to work.
 
-## Simple Menu
+I'll try to breakdown important lines here.
 
-- Icons
+Show menu item or nested menu item only in specific file types.
 ```
-ToDo
-```
-## Nested Menu
-
-```
-ToDo
-```
-## Custom Menu
-
-```
-ToDo
-```
-## Filter by filetype / path / mode
-
-```
-ToDo
+\['  Code Diagnostics',[
+  ...
+  \], { 'onlyTypes': s:javascriptTypes }],
 ```
 
-<!-- panvimdoc-ignore-end -->
+
+Is `IsInNodeProject` and `IsInGitWorktree` are built in filters that you can use 
+in combination with few helper functions explained above.
+```
+\['  Scripts', ":lua require('conmenu').fromNpm()",
+  \{ 'filter': 'IsInNodeProject' }],
+```
+
+Shows an example of how to build a custom menu.
+The function itself is called from Harpoon menu item at the bottom.
+```
+function ShowHarpoonMenu()
+```
+
+Use this to get some ideas what you can do:
+```vim
+" Map <leader>m to open default menu.
+noremap <silent> <leader>m :ConMenu<CR>
+
+" Some of the menu items should only be available in javascript files
+let s:javascriptTypes = ['typescriptreact', 'typescript', 'javascript', 'javascript.jsx', 'json']
+" By default numbers are not bound, but we we want to bind numbers too
+let g:conmenu#available_bindings = '1234567890wertyuiopasdfghlzxcvbnm'
+
+
+" This generates a new menu programatically
+function ShowHarpoonMenu()
+  local marks = require("harpoon").get_mark_config().marks;
+  local marksCount = table.maxn(marks)
+  -- Default entries, that are always shown
+  local menuEntries = {
+    { 'Show all', ':lua require("harpoon.ui").toggle_quick_menu()' },
+    { 'Add current File', ':lua require("harpoon.mark").add_file()' },
+  };
+  -- Add divider if we have marks
+  if (marksCount > 0) then
+    table.insert(menuEntries, { '────────────────────────────'})
+  end
+
+  -- Prepare navigation marks
+  for i,v in ipairs(marks) do
+    -- Get just the filename from entire path
+    local file = string.match("/" .. v.filename, ".*/(.*)$")
+    -- Add menu entry
+    table.insert(menuEntries, {i .. " " .. file, "lua require('harpoon.ui').nav_file(".. i ..")"})
+  end
+  -- Show menu
+  require('conmenu').openCustom(menuEntries)
+end
+END
+
+" Find icons here: https://www.nerdfonts.com/cheat-sheet
+let g:conmenu#default_menu = [
+\['  Code Actions', [
+  \['  Rename', ":call CocActionAsync('rename')"],
+  \['  Fix', ':CocFix'],
+  \['  Cursor', ":call CocActionAsync('codeAction', 'cursor')"],
+  \['  Refactor', ":call CocActionAsync('refactor')"],
+  \['  Selection', "execute 'normal gv' | call CocActionAsync('codeAction', visualmode())"],
+  \['  Definition', ":call CocActionAsync('jumpDefinition')"],
+  \['  Declaration', ":call CocActionAsync('jumpDeclaration')"],
+  \['  Type Definition', ":call CocActionAsync('jumpTypeDefinition')"],
+  \['  Implementation', ":call CocActionAsync('jumpImplementation')"],
+  \['  References', ":call CocActionAsync('jumpReferences')"],
+  \['  Usages', ":call CocActionAsync('jumpUsed')"],
+  \['  Test Nearest', ':TestNearest'],
+  \['﬍  File Outline', ':CocOutline'],
+  \['   Format File', ':PrettierAsync'],
+  \['   UnMinify JS', ':call UnMinify()'],
+  \['   Organise Imports', ":call CocAction('organizeImport')"],
+  \], { 'onlyTypes': s:javascriptTypes }],
+\['  Code Diagnostics',[
+  \['  List Diagnostics', ':CocList diagnostics'],
+  \['  Previous', ":call CocActionAsync('diagnosticPrevious')"],
+  \['  Next', ":call CocActionAsync('diagnosticNext')"],
+  \['  Info', ":call CocActionAsync('diagnosticInfo')"]
+  \], { 'onlyTypes': s:javascriptTypes }],
+\['  Scripts', ":lua require('conmenu').fromNpm()",
+  \{ 'filter': 'IsInNodeProject' }],
+\['  Lerna Projects', ":lua require('conmenu').fromLerna()",
+  \{ 'filter': 'IsInNodeProject' }],
+\['────────────────────────────', v:null, { 'onlyTypes': s:javascriptTypes}],
+\['  Navigate', [
+  \['  Fuzzy', ':Files'],
+  \['  Recent Files', ':CtrlPMRUFiles'],
+  \['  Mixed', ':CtrlPMixed'],
+  \['  Marks', ':Marks' ],
+  \['────────────────────────────'],
+  \['﬍  Explorer', ':CocCommand explorer'],
+  \['﬍  Highlight in Explorer', ':CocCommand explorer --reveal'],
+  \['  Lines in file', ':CocList outline'],
+  \]],
+\['  Utils', [
+  \['  Git', ':call ToggleTerm("lazygit")', { 'filter': 'IsInGitWorktree' }],
+  \['  Docker', ':call ToggleTerm("lazydocker")'],
+  \['  Databases', ':DBUI'],
+  \['  Terminal', ':terminal'],
+  \['  Dev Docs', ":call devdocs#open(expand('<cword>'))"],
+  \['  Help', ':call ShowDocumentation()'],
+  \['────────────────────────────'],
+  \['  Delete All Marks', ':delmarks A-Z0-9a-z'],
+  \['  Configs', [
+    \[' neovim', ':e ~/.config/nvim/init.vim'],
+    \[' zsh', ':e ~/.zshrc'],
+    \[' coc.nvim', ':CocConfig'],
+    \]],
+  \['────────────────────────────'],
+  \['  Buffer in Finder', ':silent exec "!open %:p:h"'],
+  \['  Project in Finder', ':silent exec "!open $(pwd)"'],
+  \['פּ  TreeSitter Playground', ':TSPlaygroundToggle'],
+  \]],
+\['﬘  Buffers', [
+  \['﬘  Show All', ':Buffers'],
+  \['﬘  Close All', ':silent bufdo BD!'],
+  \]],
+\['  Git', [
+  \['Status', ':Git'],
+  \['Blame', ':Git blame'],
+  \['Why', ':GitMessenger'],
+  \['────────────────────────────'],
+  \['Create Worktree', ":lua require('conmenu').createWorktree()"],
+  \['Select Worktree', ":lua require('conmenu').selectWorktree()"],
+  \['Remove Worktree', ":lua require('conmenu').removeWorktree()"],
+  \], { 'filter': 'IsInGitWorktree' }],
+\['  Harpoon', ':lua ShowHarpoonMenu()'],
+\]
+```

@@ -24,12 +24,12 @@ augroup ConMenu
   " Default keybindings for when you are in-menu
   autocmd!
   autocmd FileType conmenu nnoremap <silent> <buffer> <ESC> :ConMenuClose<CR>
+  autocmd FileType conmenu nnoremap <silent> <buffer> q :ConMenuClose<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> <CR> :ConMenuConfirm<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> j :ConMenuNext<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> <C-n> :ConMenuNext<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> <C-p> :ConMenuPrevious<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> k :ConMenuPrevious<CR>
-  autocmd FileType conmenu nnoremap <silent> <buffer> q :ConMenuClose<CR>
 
   " Hide cursor
   autocmd FileType conmenu setlocal guicursor+=a:InvisibleCursor
@@ -54,7 +54,7 @@ let g:conmenu#cursor_character = get(g:, 'conmenu#cursor_character',  '>') " ●
 let g:conmenu#shortcut_highlight_group = get(g:, 'conmenu#shortcut_highlight_group',  'KeyHighlight')
 let g:conmenu#borders = get(g:, 'conmenu#borders',  'rounded')
 
-" TODO:
+" TODO: Not yet used in lua
 let g:conmenu#close_keys = get(g:, 'conmenu#close_keys',  ['q', '<esc>'])
 let g:conmenu#js#package_manager = get(g:, 'conmenu#js#package_manager',  'yarn')
 
