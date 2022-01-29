@@ -34,7 +34,8 @@ local function createWorktree()
     print("git-worktree.nvim not installed. Skipping.");
   end
   local name = vim.fn.input('Worktree name: ');
-  worktree.create_worktree(name, name, "origin");
+  local path = "../" .. name
+  worktree.create_worktree(path, name, "origin");
 end
 
 local function removeWorktree()

@@ -32,30 +32,10 @@ function FileExists(name)
    if f~=nil then io.close(f) return true else return false end
 end
 
--- Finds package.json recursively
-local function FindFileRecursively(file)
-  local fullPath = vim.fn.expand('%:p')
-  if (fullPath == "") then
-    fullPath = vim.fn.getcwd() .. "/doesntMatter.txt"
-  end
-  local pathParts = Split(fullPath, '/');
-
-  for i = 1, #pathParts - 1, 1 do
-    local currentParts = {unpack(pathParts, 2, #pathParts - i)}
-    local filePath = table.concat(currentParts, '/')
-    filePath = "/" .. filePath .. "/" .. file
-    if FileExists(filePath) then
-      return filePath
-    end
-  end
-  return ""
-end
-
 
 return {
   listIncludes = listIncludes,
   FileExists = FileExists,
   Split = Split,
-  FindFileRecursively = FindFileRecursively,
   GlobsMatch = GlobsMatch
 }

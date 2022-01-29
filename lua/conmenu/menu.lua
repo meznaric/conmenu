@@ -137,8 +137,6 @@ local function showMenu()
 end
 
 -- Filters current menu commands based on provided options. Currently you can filter by:
---  - File type
---  - Custom filter function - it has to be globally define in lua or vimscript
 local function filterActiveCommands()
   local t = {}
   for i, v in ipairs(state.activeCommands) do
@@ -170,7 +168,7 @@ local function filterActiveCommands()
 
       local onlyWorkingDirectoriesMatches = true
       if (options.onlyWorkingDirectories) then
-        local onlyWorkingDirectoriesMatches = utils.GlobsMatch(options.onlyWorkingDirectories, vim.fn.getcwd());
+        onlyWorkingDirectoriesMatches = utils.GlobsMatch(options.onlyWorkingDirectories, vim.fn.getcwd());
       end
 
       if (filetypeValid and filterValid and onlyBufferPathsMatches and onlyWorkingDirectoriesMatches) then

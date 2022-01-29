@@ -6,20 +6,19 @@ local function IsInGitWorktree()
   local result = vim.fn.trim(handle:read("*a"))
   handle:close()
   -- It returns error message if we are not in git repositroy
-  local r = result == "true" or result == "false"
+  local r = result == "true"
   return r
 end
 
+local function IsInGitRepository()
+  return vim.fn.finddir('.git', ';') ~= "" or IsInGitWorktree();
+end
+
 local function IsInNodeProject()
-  local file = utils.FindFileRecursively('package.json')
-  if file ~= "" then
-    return true
-  else
-    return false
-  end
+  return vim.fn.findfile('package.json', ';') ~= "";
 end
 
 return {
-  IsInGitWorktree = IsInGitWorktree,
+  IsInGitRepository = IsInGitRepository,
   IsInNodeProject = IsInNodeProject
 }

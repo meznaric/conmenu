@@ -12,7 +12,7 @@ function! s:Hi() abort
 endfunction
 
 " Commands so you can make your own binds
-command! -nargs=0 ConMenu :lua require('conmenu').open()
+command! -range -nargs=0 ConMenu :lua require('conmenu').open()
 command! -nargs=0 ConMenuNext :lua require('conmenu').switchItem(1)
 command! -nargs=0 ConMenuPrevious :lua require('conmenu').switchItem(-1)
 command! -nargs=0 ConMenuConfirm :lua require('conmenu').executeItem()
@@ -26,10 +26,10 @@ augroup ConMenu
   autocmd FileType conmenu nnoremap <silent> <buffer> <ESC> :ConMenuClose<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> q :ConMenuClose<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> <CR> :ConMenuConfirm<CR>
-  autocmd FileType conmenu nnoremap <silent> <buffer> j :ConMenuNext<CR>
+  autocmd FileType conmenu map <silent> <buffer> j :ConMenuNext<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> <C-n> :ConMenuNext<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> <C-p> :ConMenuPrevious<CR>
-  autocmd FileType conmenu nnoremap <silent> <buffer> k :ConMenuPrevious<CR>
+  autocmd FileType conmenu map <silent> <buffer> k :ConMenuPrevious<CR>
 
   " Hide cursor
   autocmd FileType conmenu setlocal guicursor+=a:InvisibleCursor
