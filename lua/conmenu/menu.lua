@@ -19,6 +19,10 @@ local function isCommand(commandOrMenu)
 	return type(commandOrMenu) == "string"
 end
 
+local function isFunction(commandOrMenu)
+	return type(commandOrMenu) == "function"
+end
+
 local function isSubmenu(commandOrMenu)
 	return type(commandOrMenu) == "table"
 end
@@ -58,19 +62,28 @@ end
 local function getBinding(name, availableBindings)
 	-- We need to count unicode characters if we want to return correct highlightPosition
 	local preceedingUtfChars = 0
+	local isThreeByte = false
 	for i = 1, #name do
 		local char = utf8.sub(name, i, i)
 		local lowerChar = string.lower(char)
+		local MAX_INT = 65535
+		local codepoint = utf8.codepoint(name, i, i)
 		-- Not sure 256 is correct?... But it seems to work for my use case. Icons seems to have giant numbers.
-		if utf8.codepoint(name, i, i) > 256 then
+		if codepoint > 256 then
 			preceedingUtfChars = preceedingUtfChars + 1
+			isThreeByte = codepoint > MAX_INT
 		end
 		-- Can we find `char` in availableBindings?
 		for n = 1, #availableBindings do
 			if lowerChar == availableBindings:sub(n, n) then
 				local highlightPosition = i + 2 + (preceedingUtfChars * 2)
+				if isThreeByte then
+					highlightPosition = highlightPosition + 1
+				end
+
 				local newAvailableBindings = availableBindings:sub(1, n - 1)
 					.. availableBindings:sub(n + 1, #availableBindings)
+
 				return {
 					lowerChar,
 					newAvailableBindings,
@@ -258,6 +271,9 @@ local function executeItem()
 	if isCommand(commandOrMenu) then
 		close()
 		vim.cmd(commandOrMenu)
+	elseif isFunction(commandOrMenu) then
+		close()
+		commandOrMenu()
 	elseif isSubmenu(commandOrMenu) then
 		close()
 		state.activeCommands = commandOrMenu

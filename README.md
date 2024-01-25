@@ -90,10 +90,10 @@ In the documentation below `Menu` represents the array of `MenuItem`s.
 
 **MenuItem**
 
-Which is defined as an array of 3 items `Name`, `Menu` or `Command`, and `Options`
+Which is defined as an array of 3 items:
 
  - `Name` is the name of the entry in the menu list. What you see.
- - `Menu` or command can be either another array of `MenuItem`s
+ - `Menu` or command or a lua function
  - `Options` defines when `MenuListItem` is shown. If you define multiple options
     for example `onlyTypes` and `onlyWorkingDirectories` it will show the menu list
     item only when both conditions are true, *not* when either is true. This is
@@ -150,6 +150,12 @@ local options = {
 local menuItem = {name, ":echo hey", options}
 local nestedMenu = {name, {menuItem, menuItem}, options}
 local divider = {'──────────────────────────', nil, options}
+local callbackExample = {
+    'Press Me',
+    function() 
+        print("Pressed!")
+    end
+}
 
 vim.g['conmenu#default_menu'] = { menuItem, divider, menuItem, nestedMenu }
 ```
