@@ -28,8 +28,10 @@ augroup ConMenu
   autocmd FileType conmenu nnoremap <silent> <buffer> <CR> :ConMenuConfirm<CR>
   autocmd FileType conmenu map <silent> <buffer> j :ConMenuNext<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> <C-n> :ConMenuNext<CR>
+  autocmd FileType conmenu nnoremap <silent> <buffer> <down> :ConMenuNext<CR>
   autocmd FileType conmenu nnoremap <silent> <buffer> <C-p> :ConMenuPrevious<CR>
   autocmd FileType conmenu map <silent> <buffer> k :ConMenuPrevious<CR>
+  autocmd FileType conmenu nnoremap <silent> <buffer> <up> :ConMenuPrevious<CR>
 
   " Hide cursor
   autocmd FileType conmenu setlocal guicursor+=a:InvisibleCursor
