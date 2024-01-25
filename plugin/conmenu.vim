@@ -48,6 +48,9 @@ augroup END
 
 " Set default variables
 let g:conmenu#default_menu = get(g:, 'conmenu#default_menu', [])
+let g:conmenu#relative = get(g:, 'conmenu#relative', 'cursor')
+let g:conmenu#row = get(g:, 'conmenu#row', 0)
+let g:conmenu#col = get(g:, 'conmenu#col', 0)
 " Only these keys will be bound if found in menu item name
 let g:conmenu#available_bindings = get(g:, 'conmenu#available_bindings',  'wertyuiopasdfghlzxcvbnm')
 let g:conmenu#cursor_character = get(g:, 'conmenu#cursor_character',  '>') " ● - You can use a circle if you want?

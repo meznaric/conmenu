@@ -40,9 +40,26 @@ Optional 2/2:
 
 # Installation
 
-I use Plug as a plugin manager and vimscript for my vim config, here is how I use it:
-```
+Plug with vimscript:
+```vim
 Plug 'meznaric/conmenu'
+
+" Configure ConMenu
+let g:conmenu#shortcut_highlight_group = "KeyHighlight";
+```
+
+Lazy.nvim with lua:
+```lua
+{
+	"meznaric/conmenu",
+    init = function()
+        -- Configure it in "init"
+        vim.api.nvim_set_keymap("n", "<leader>", ":ConMenu<CR>", { silent = true })
+        vim.g["conmenu#default_menu"] = {...}
+        vim.api.nvim_set_hl(0, "KeyHighlight", { fg = "#569CD6" })
+        vim.g["conmenu#shortcut_highlight_group"] = "KeyHighlight"
+    end,
+}
 ```
 
 Feel free to open a pull request if you have install instructions for other systems.
@@ -62,7 +79,6 @@ Feel free to open a pull request if you have install instructions for other syst
 :ConMenuClose
 :ConMenuUpdateRender
 ```
-
 
 # Configuration
 
@@ -138,7 +154,7 @@ local divider = {'────────────────────�
 vim.g['conmenu#default_menu'] = { menuItem, divider, menuItem, nestedMenu }
 ```
 
-## Variables
+## Global Conmenu Options
 
 ```vim
 " Default menu that opens when you execute ConMenu
@@ -157,9 +173,13 @@ let g:conmenu#cursor_character = '>';
 " On top of that create a new highlight group shortcut_highlight_group
 let g:conmenu#shortcut_highlight_group = 'KeyHighlight';
 
-" This is just passed on to nvim_open_win, here are the options:
-" none, single, double, rounded, solid, shadow
+" These options are just passed on to nvim_open_win:
+" border values: none, single, double, rounded, solid, shadow
 let g:conmenu#border = 'rounded';
+" relative values: cursor, mouse, win, editor
+let g:conmenu#relative = 'cursor'
+let g:conmenu#row = get(g:, 'conmenu#row', 0)
+let g:conmenu#col = get(g:, 'conmenu#col', 0)
 
 " Not yet implemented
 let g:conmenu#close_keys = ['q', '<esc>']
@@ -172,7 +192,7 @@ let g:conmenu#js#package_manager = 'yarn'
 " Opens default menu (defined at g:conmenu#default_menu)
 open()
 " Opens custom menu
-openCustom(menu)
+openCustom(menu, window_options)
 close()
 
 executeItem()
@@ -238,7 +258,7 @@ let g:conmenu#default_menu = [
 
 # Example
 
-Here is the example of how I use, it depends on bunch of other plugins so don't expect to
+Here is the example of how I use it, it depends on bunch of other plugins so don't expect to
 copy and paste as it's not going to work.
 
 I'll try to breakdown important lines here.
@@ -273,7 +293,6 @@ noremap <silent> <leader>m :ConMenu<CR>
 let s:javascriptTypes = ['typescriptreact', 'typescript', 'javascript', 'javascript.jsx', 'json']
 " By default numbers are not bound, but we we want to bind numbers too
 let g:conmenu#available_bindings = '1234567890wertyuiopasdfghlzxcvbnm'
-
 
 " This generates a new menu programatically
 function ShowHarpoonMenu()
